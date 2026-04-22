@@ -18,7 +18,8 @@ A real-time scheduling simulator implementing:
 - JavaScript (Canvas API)
 
 ## 📸 Preview
-(Add screenshot here)
+<img width="1899" height="970" alt="image" src="https://github.com/user-attachments/assets/314ab593-1625-4813-ae1f-59829fe3f9c4" />
+
 
 ## ▶️ How to Run
 Open index.html in browser
