@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RT Scheduling Simulator</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Inline SVGs will be used for icons to avoid external dependencies -->
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+            <div class="logo-area">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                <div class="title-block">
+                    <h1>RT Scheduling <span>Simulator</span></h1>
+                    <p class="subtitle">Animated Rate Monotonic (RM) & Earliest Deadline First (EDF) Simulator</p>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-nav outline" onclick="toggleTheme()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg> Theme</button>
+                <button class="btn-nav outline primary" onclick="openModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> How it works?</button>
+            </div>
+        </header>
+
+        <main class="dashboard">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <!-- Add Task Panel -->
+                <section class="card">
+                    <h3>Add New Task</h3>
+                    <div class="input-group">
+                        <label for="taskName">Task Name</label>
+                        <input type="text" id="taskName" placeholder="e.g., T1">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="execTime">Execution Time (C)</label>
+                            <input type="number" id="execTime" placeholder="Ex: 2" min="1">
+                        </div>
+                        <div class="input-group">
+                            <label for="period">Period (T) / Deadline</label>
+                            <input type="number" id="period" placeholder="Ex: 5" min="1">
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="addTask()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add Task
+                    </button>
+                </section>
+
+                <!-- Current Tasks Panel -->
+                <section class="card">
+                    <h3>Current Tasks</h3>
+                    <div class="task-list-header">
+                        <span>Task</span>
+                        <span>C</span>
+                        <span>T</span>
+                        <span>U</span>
+                        <span></span>
+                    </div>
+                    <ul id="taskList">
+                        <div class="empty-state">No tasks added yet.</div>
+                    </ul>
+                    <div class="utilization-footer">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span style="font-size:0.8rem; color:var(--text-secondary);">Total Utilization (U)</span>
+                            <span id="utilizationValue" style="font-weight:600; font-size:1rem;">0%</span>
+                        </div>
+                        <div class="utilization-bar">
+                            <div class="utilization-fill" id="utilizationFill"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Simulation Controls Panel -->
+                <section class="card controls-section">
+                    <h3>Simulation Controls</h3>
+                    <div class="control-row">
+                        <label>Algorithm</label>
+                        <div class="alg-toggle">
+                            <button id="btnRM" class="btn-toggle active" onclick="setAlgorithm('RM')">RM</button>
+                            <button id="btnEDF" class="btn-toggle" onclick="setAlgorithm('EDF')">EDF</button>
+                        </div>
+                    </div>
+                    <div class="speed-control">
+                        <label for="simSpeed">Animation Speed</label>
+                        <input type="range" id="simSpeed" min="50" max="600" step="50" value="200">
+                        <div class="speed-labels">
+                            <span>50ms</span><span class="active">200ms</span><span>600ms</span>
+                        </div>
+                    </div>
+                    <div class="action-buttons-grid">
+                        <button class="btn-play" onclick="runSimulation()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Run</button>
+                        <button class="btn-pause outline" onclick="pauseSimulation()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg> Pause</button>
+                        <button class="btn-stop outline" onclick="stopSimulation()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16"></rect></svg> Stop</button>
+                    </div>
+                    <button class="btn-danger outline full-width" onclick="clearTasks()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> 
+                        Clear All Tasks
+                    </button>
+                </section>
+            </aside>
+
+            <!-- Main Content Area -->
+            <section class="main-content">
+                <!-- Top Stats Dashboard -->
+                <div class="card stats-dashboard glass-panel">
+                    <div class="dashboard-header">
+                        <h2>Schedule Visualization <span id="currentAlg" class="neon-text">(None)</span></h2>
+                    </div>
+                    <div class="dashboard-stats">
+                        <div class="stat-box">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <div>
+                                <span class="stat-label">Current Time</span>
+                                <div class="stat-value cyber-font" id="simClock">t = 0</div>
+                            </div>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-box">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                            <div>
+                                <span class="stat-label">CPU Utilization</span>
+                                <div class="stat-value cyber-font" id="liveUtilDisplay" style="color:#10b981">0.0%</div>
+                            </div>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-box">
+                            <div>
+                                <span class="stat-label">Status</span>
+                                <div class="sim-status stopped" id="simStatus"><span class="status-dot"></span> <span id="simStatusText">READY</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Canvas Area (Execution + Period Views) -->
+                <div class="card chart-container glass-panel">
+                    <div class="canvas-wrapper custom-scroll-area" id="canvasWrapper">
+                        <canvas id="mainCanvas" width="900" height="400"></canvas>
+                        <div id="tooltip" class="custom-tooltip"></div>
+                    </div>
+                </div>
+
+                <!-- Bottom Dashboards row -->
+                <div class="bottom-dashboards">
+                    <div class="card bottom-card">
+                        <h3>Task Legend</h3>
+                        <div id="legendContainer" class="legend-container">
+                            <div class="empty-state">No active tasks</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bottom-card">
+                        <h3>Live CPU Utilization</h3>
+                        <div class="cpu-monitor-layout">
+                            <canvas id="cpuChart" width="220" height="100"></canvas>
+                            <div class="cpu-badge cyber-font" id="miniCpuBadge">0.0%<br><span style="font-size:0.6rem; color:var(--text-secondary); font-family:var(--font-family);">Current</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card bottom-card">
+                        <h3>Statistics</h3>
+                        <div class="stat-list">
+                            <div class="stat-row"><span>Total Tasks</span> <span class="stat-number cyber-font" id="statTotalTasks">0</span></div>
+                            <div class="stat-row"><span>Hyperperiod</span> <span class="stat-number cyber-font" id="statHyperperiod">0</span></div>
+                            <div class="stat-row"><span>Completed Jobs</span> <span class="stat-number cyber-font" id="statCompleted">0</span></div>
+                            <div class="stat-row"><span style="color:#ff0055">Missed Deadlines</span> <span class="stat-number cyber-font" style="color:#ff0055" id="statMissed">0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- How it works Modal -->
+    <div class="modal-overlay" id="howItWorksModal" style="display: none;">
+        <div class="modal-content glass-panel card">
+            <h2 style="color:var(--neon-blue); margin-bottom: 15px;">How it Works 🚀</h2>
+            <p style="color:var(--text-secondary); line-height: 1.6; margin-bottom: 10px;">
+                This simulator visually demonstrates how real-time operating systems schedule tasks using the CPU.
+            </p>
+            <ul style="color:var(--text-primary); line-height: 1.8; margin-left: 20px; font-size: 0.9rem;">
+                <li><strong>Add Tasks:</strong> Enter a Name, Execution Time <b>C</b> (time needed to complete), and Period <b>T</b> (interval between task arrivals).</li>
+                <li><strong>RM (Rate Monotonic):</strong> Tasks with shorter periods (T) get higher priority (fixed).</li>
+                <li><strong>EDF (Earliest Deadline First):</strong> Tasks with deadlines closest to the current time get highest priority (dynamic).</li>
+                <li><strong>Deadlines:</strong> The vertical dashed lines indicate when a task MUST finish. If a task fails to finish on time, it pulses <span style="color:#ff0055">RED</span>!</li>
+                <li><strong>Preemption:</strong> A running task stops splitting its block if a higher priority task wakes up and needs CPU time.</li>
+            </ul>
+            <button class="btn-primary" style="margin-top:20px; width:100%;" onclick="closeModal()">Got it!</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
